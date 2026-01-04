@@ -1,0 +1,63 @@
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+*.sqlite3
+*.db
+
+# Virtual environment
+venv/
+.env
+.env.*
+!.env.example
+
+# =========================
+# Flask
+# =========================
+instance/
+*.pid
+
+# =========================
+# SonarQube
+# =========================
+.scannerwork/
+sonar-report.json
+
+# =========================
+# Docker
+# =========================
+*.tar
+docker-data/
+docker-volume/
+docker-compose.override.yml
+
+# =========================
+# Node / Frontend (http server cache)
+# =========================
+node_modules/
+npm-debug.log
+
+# =========================
+# IDE / OS
+# =========================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# =========================
+# GitHub Actions / CI
+# =========================
+coverage/
+reports/
+
+# =========================
+# Secrets
+# =========================
+*.pem
+*.key
