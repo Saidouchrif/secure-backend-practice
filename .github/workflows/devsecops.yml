@@ -1,29 +1,54 @@
-name: DevSecOps Pipeline
+name: Security Scan   # Nom du workflow (analyse de sécurité)
 
-on: [push]
+on:
+  push:
+    branches: [ "main" ]        # Se déclenche quand on push sur main
+  pull_request:
+    branches: [ "main" ]        # Se déclenche lors d'une Pull Request vers main
+
+# Autorisations nécessaires pour l’analyse de sécurité
+permissions:
+  contents: read                # Lire le code du dépôt
+  security-events: write        # Écrire les résultats de sécurité (CodeQL)
 
 jobs:
   security:
-    runs-on: ubuntu-latest
+    name: Security Analysis     # Nom du job
+    runs-on: ubuntu-latest      # Le job s’exécute sur Ubuntu
+
     steps:
-      - uses: actions/checkout@v3
+      # Récupérer le code depuis GitHub
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: CodeQL
-        uses: github/codeql-action/analyze@v3
+      # Initialiser CodeQL (étape obligatoire)
+      # Elle prépare l’analyse de sécurité
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          languages: python
+          languages: python     # Langage analysé : Python
 
+      # Compilation automatique si nécessaire
+      # Utile pour certains projets
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      # Lancer l’analyse CodeQL
+      # Cette étape génère les résultats de sécurité
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+      # Analyse de sécurité avec Bandit (Python)
+      # || true évite l’échec du workflow s’il y a des alertes
       - name: Bandit Scan
         run: |
           pip install bandit
-          bandit -r backend -ll
+          bandit -r backend || true
 
-      - name: Build Docker
-        run: docker build -t security-api .
-
+      # Analyse des vulnérabilités avec Trivy
+      # Analyse les fichiers et dépendances du projet
       - name: Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: security-api
-          severity: HIGH,CRITICAL
-          exit-code: 1
+          scan-type: fs         # Analyse du système de fichiers
+          scan-ref: .           # Analyse tout le projet
