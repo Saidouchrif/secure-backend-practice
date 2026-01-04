@@ -5,9 +5,13 @@ import hashlib
 from flask import Flask, request, jsonify
 import jwt
 from utils import load_user
+from flask_wtf.csrf import CSRFProtect
+import bcrypt
 
 app = Flask(__name__)
-
+csrf = CSRFProtect(app)
+# This is a stateless REST API secured with JWT tokens sent via Authorization headers.
+# CSRF protection is not required because cookies and server-side sessions are not used.
 SECRET_KEY = os.getenv("SECRET_KEY")
 ACCESS_TOKEN_EXPIRES_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRES_MIN"))
 
@@ -39,7 +43,8 @@ def ping():
 @app.route("/hash")
 def hash_pwd():
     pwd = request.args.get("pwd", "admin")
-    return hashlib.md5(pwd.encode()).hexdigest()
+    hashed = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
+    return hashed.decode()
 
 @app.route("/hello")
 def hello():
@@ -47,4 +52,5 @@ def hello():
     return f"<h1>Hello {name}</h1>"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
+    app.run(debug=debug_mode)

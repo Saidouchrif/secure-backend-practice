@@ -1,6 +1,14 @@
+import os
+
 def load_user(username):
     fake_db = {
-        "admin": {"password": "1234", "role": "admin"},
-        "user": {"password": "pass", "role": "user"}
+        "admin": {
+            "password": os.getenv("ADMIN_PASSWORD"),
+            "role": "admin"
+        },
+        "user": {
+            "password": os.getenv("USER_PASSWORD"),
+            "role": "user"
+        }
     }
     return fake_db.get(username)
