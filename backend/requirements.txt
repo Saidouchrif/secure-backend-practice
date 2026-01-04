@@ -4,3 +4,4 @@ PyJWT
 bcrypt
 python-dotenv
 flask-wtf
+pytest

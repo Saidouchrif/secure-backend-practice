@@ -1,55 +1,91 @@
 import os
 import datetime
-import subprocess
-import hashlib
-from flask import Flask, request, jsonify
 import jwt
-from utils import load_user
-from flask_wtf.csrf import CSRFProtect
 import bcrypt
+from dotenv import load_dotenv
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from utils import load_user
+
+load_dotenv()
 
 app = Flask(__name__)
-csrf = CSRFProtect(app)
-# This is a stateless REST API secured with JWT tokens sent via Authorization headers.
-# CSRF protection is not required because cookies and server-side sessions are not used.
-SECRET_KEY = os.getenv("SECRET_KEY")
-ACCESS_TOKEN_EXPIRES_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRES_MIN"))
+CORS(
+    app,
+    resources={
+        r"/*": {
+            "origins": [
+                "http://127.0.0.1:5500",
+                "http://localhost:5500",
+                "http://127.0.0.1:5000",
+                "http://localhost:5000"
+            ]
+        }
+    }
+)
+SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret")
+ACCESS_TOKEN_EXPIRES_MIN = int(os.getenv("ACCESS_TOKEN_EXPIRES_MIN", 60))
+
 
 def create_token(username, role):
+    now = datetime.datetime.now(datetime.timezone.utc)
     payload = {
         "sub": username,
         "role": role,
-        "iat": datetime.datetime.utcnow(),
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRES_MIN)
+        "iat": now,
+        "exp": now+ datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRES_MIN),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+
+def get_current_user():
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None, jsonify({"error": "Missing token"}), 401
+
+    token = auth.split(" ", 1)[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload, None, None
+    except jwt.ExpiredSignatureError:
+        return None, jsonify({"error": "Token expired"}), 401
+    except jwt.InvalidTokenError:
+        return None, jsonify({"error": "Invalid token"}), 401
+
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     user = load_user(data.get("username"))
+
     if not user or user["password"] != data.get("password"):
         return jsonify({"error": "Invalid credentials"}), 401
 
     token = create_token(data["username"], user["role"])
     return jsonify({"token": token})
 
-@app.route("/ping")
-def ping():
-    host = request.args.get("host", "localhost")
-    result = subprocess.check_output(f"ping -c 1 {host}", shell=True)
-    return result
 
-@app.route("/hash")
-def hash_pwd():
-    pwd = request.args.get("pwd", "admin")
-    hashed = bcrypt.hashpw(pwd.encode(), bcrypt.gensalt())
-    return hashed.decode()
+@app.route("/profile")
+def profile():
+    payload, err, code = get_current_user()
+    if err:
+        return err, code
 
-@app.route("/hello")
-def hello():
-    name = request.args.get("name", "user")
-    return f"<h1>Hello {name}</h1>"
+    return jsonify({
+        "username": payload["sub"],
+        "role": payload["role"],
+        "message": "Profile OK"
+    })
+
+
+@app.route("/me")
+def me():
+    payload, err, code = get_current_user()
+    if err:
+        return err, code
+
+    return jsonify(payload)
+
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"

@@ -1,137 +1,103 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>JWT Security Lab</title>
+  <meta charset="UTF-8" />
+  <title>JWT Authentication Demo</title>
 
-  <style>
-    body {
-      font-family: "Segoe UI", Tahoma, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      max-width: 520px;
-      margin: 60px auto;
-      background: #ffffff;
-      padding: 30px;
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.1);
-    }
-
-    h2 {
-      text-align: center;
-      color: #2c3e50;
-    }
-
-    h3 {
-      color: #34495e;
-      margin-bottom: 10px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      font-size: 14px;
-    }
-
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 15px;
-    }
-
-    button:hover {
-      background: #2980b9;
-    }
-
-    .btn-danger {
-      background: #e74c3c;
-    }
-
-    .btn-danger:hover {
-      background: #c0392b;
-    }
-
-    .token {
-      word-break: break-all;
-      font-size: 12px;
-      background: #ecf0f1;
-      padding: 10px;
-      border-radius: 5px;
-      margin-top: 10px;
-      color: #2c3e50;
-    }
-
-    hr {
-      margin: 25px 0;
-      border: none;
-      border-top: 1px solid #ddd;
-    }
-
-    pre {
-      background: #1e1e1e;
-      color: #00ff9c;
-      padding: 15px;
-      border-radius: 5px;
-      font-size: 13px;
-      overflow-x: auto;
-    }
-
-    .footer {
-      text-align: center;
-      font-size: 12px;
-      color: #7f8c8d;
-      margin-top: 20px;
-    }
-  </style>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
 
-<div class="container">
+  <div class="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
 
-  <h2>JWT Authentication Demo</h2>
+    <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">
+      🔐 JWT Authentication Demo
+    </h2>
 
-  <h3>Login</h3>
-  <input id="username" placeholder="Username" value="admin">
-  <input id="password" type="password" placeholder="Password" value="1234">
+    <!-- Login -->
+    <div class="space-y-3">
+      <input
+        id="username"
+        value="admin"
+        placeholder="Username"
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
 
-  <button onclick="login()">Login</button>
-  <button class="btn-danger" onclick="logout()">Logout</button>
+      <input
+        id="password"
+        type="password"
+        value="1234"
+        placeholder="Password"
+        class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
 
-  <div id="token" class="token"></div>
+      <button
+        onclick="login()"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition"
+      >
+        Login
+      </button>
 
-  <hr>
+      <button
+        onclick="logout()"
+        class="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition"
+      >
+        Logout
+      </button>
+    </div>
 
-  <button onclick="profile()">GET /profile</button>
-  <button onclick="me()">GET /me</button>
+    <!-- Token -->
+    <div class="mt-4">
+      <p class="text-sm text-gray-600 mb-1">JWT Token:</p>
+      <div
+        id="token"
+        class="text-xs bg-gray-100 p-3 rounded-lg break-all text-gray-800"
+      ></div>
+    </div>
 
-  <pre id="output">Résultat ici...</pre>
+    <!-- Actions -->
+    <div class="mt-6 grid grid-cols-2 gap-3">
+      <button
+        onclick="profile()"
+        class="bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg transition"
+      >
+        GET /profile
+      </button>
 
-  <div class="footer">
-    Sécurité Applicative – JWT Lab
+      <button
+        onclick="me()"
+        class="bg-gray-800 hover:bg-gray-900 text-white py-2 rounded-lg transition"
+      >
+        GET /me
+      </button>
+    </div>
+
+    <!-- Output -->
+    <pre
+      id="output"
+      class="mt-6 bg-black text-green-400 p-4 rounded-lg text-sm overflow-x-auto"
+    >
+Résultat ici...
+    </pre>
+
+    <p class="text-center text-xs text-gray-500 mt-6">
+      Sécurité Applicative – JWT Lab
+    </p>
   </div>
-
-</div>
 
 <script>
 const API = "http://127.0.0.1:5000";
 
-function setToken(t) {
-  localStorage.setItem("jwt", t);
-  document.getElementById("token").innerText = t;
+function write(msg) {
+  document.getElementById("output").innerText =
+    typeof msg === "string" ? msg : JSON.stringify(msg, null, 2);
+}
+
+function setToken(token) {
+  localStorage.setItem("jwt", token);
+  document.getElementById("token").innerText = token;
 }
 
 function getToken() {
@@ -141,45 +107,50 @@ function getToken() {
 function logout() {
   localStorage.removeItem("jwt");
   document.getElementById("token").innerText = "";
-  write("Déconnecté");
-}
-
-function write(data) {
-  document.getElementById("output").innerText =
-    typeof data === "string" ? data : JSON.stringify(data, null, 2);
+  write("🔒 Déconnecté");
 }
 
 async function login() {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
+  try {
+    const res = await fetch(API + "/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
 
-  const res = await fetch(API + "/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password })
-  });
+    const data = await res.json();
+    if (!res.ok) return write(data);
 
-  const data = await res.json();
-  if (data.token) {
     setToken(data.token);
-    write("Login réussi ✅");
-  } else {
-    write(data);
+    write("✅ Login réussi");
+  } catch {
+    write("❌ Erreur réseau");
   }
 }
 
 async function profile() {
-  const res = await fetch(API + "/profile", {
-    headers: { Authorization: "Bearer " + getToken() }
-  });
-  write(await res.json());
+  try {
+    const res = await fetch(API + "/profile", {
+      headers: { Authorization: "Bearer " + getToken() }
+    });
+    write(await res.json());
+  } catch {
+    write("❌ Erreur réseau");
+  }
 }
 
 async function me() {
-  const res = await fetch(API + "/me", {
-    headers: { Authorization: "Bearer " + getToken() }
-  });
-  write(await res.json());
+  try {
+    const res = await fetch(API + "/me", {
+      headers: { Authorization: "Bearer " + getToken() }
+    });
+    write(await res.json());
+  } catch {
+    write("❌ Erreur réseau");
+  }
 }
 </script>
 
